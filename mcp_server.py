@@ -5,7 +5,7 @@ import math
 import statistics
 
 # MCP 서버 인스턴스 생성
-app = FastMCP("calculator-mcp")
+mcp = FastMCP("calculator-mcp")
 
 # 계산 결과를 위한 응답 모델
 class CalculationResponse(BaseModel):
@@ -24,7 +24,7 @@ class StatisticsResponse(BaseModel):
     message: str
 
 # 덧셈 함수
-@app.tool()
+@mcp.tool()
 def add(a: float, b: float) -> CalculationResponse:
     """두 숫자를 더합니다."""
     result = a + b
@@ -37,7 +37,7 @@ def add(a: float, b: float) -> CalculationResponse:
     )
 
 # 뺄셈 함수
-@app.tool()
+@mcp.tool()
 def subtract(a: float, b: float) -> CalculationResponse:
     """두 숫자에서 첫 번째 숫자에서 두 번째 숫자를 뺍니다."""
     result = a - b
@@ -50,7 +50,7 @@ def subtract(a: float, b: float) -> CalculationResponse:
     )
 
 # 곱셈 함수
-@app.tool()
+@mcp.tool()
 def multiply(a: float, b: float) -> CalculationResponse:
     """두 숫자를 곱합니다."""
     result = a * b
@@ -63,7 +63,7 @@ def multiply(a: float, b: float) -> CalculationResponse:
     )
 
 # 나눗셈 함수
-@app.tool()
+@mcp.tool()
 def divide(a: float, b: float) -> CalculationResponse:
     """첫 번째 숫자를 두 번째 숫자로 나눕니다."""
     if b == 0:
@@ -78,7 +78,7 @@ def divide(a: float, b: float) -> CalculationResponse:
     )
 
 # 복합 계산 함수
-@app.tool()
+@mcp.tool()
 def calculate(operation: str, a: float, b: float) -> CalculationResponse:
     """지정된 연산을 수행합니다. 지원되는 연산: add, subtract, multiply, divide"""
     operations = {
@@ -94,7 +94,7 @@ def calculate(operation: str, a: float, b: float) -> CalculationResponse:
     return operations[operation](a, b)
 
 # 통계 계산 함수들
-@app.tool()
+@mcp.tool()
 def statistics_basic(numbers: List[float]) -> StatisticsResponse:
     """기본 통계를 계산합니다: 개수, 합계, 평균, 최대값, 최소값"""
     if not numbers:
@@ -122,7 +122,7 @@ def statistics_basic(numbers: List[float]) -> StatisticsResponse:
         message=f"숫자 {count}개의 기본 통계: 평균={mean:.2f}, 최대={maximum}, 최소={minimum}"
     )
 
-@app.tool()
+@mcp.tool()
 def statistics_advanced(numbers: List[float]) -> StatisticsResponse:
     """고급 통계를 계산합니다: 중앙값, 표준편차, 분산"""
     if not numbers:
@@ -161,7 +161,7 @@ def statistics_advanced(numbers: List[float]) -> StatisticsResponse:
         message=f"숫자 {count}개의 고급 통계: 중앙값={median:.2f}, 표준편차={std_dev:.2f}, 분산={variance:.2f}"
     )
 
-@app.tool()
+@mcp.tool()
 def statistics_full(numbers: List[float]) -> StatisticsResponse:
     """전체 통계를 계산합니다: 모든 기본 및 고급 통계"""
     if not numbers:
@@ -208,7 +208,7 @@ def statistics_full(numbers: List[float]) -> StatisticsResponse:
     )
 
 # 수학 함수들
-@app.tool()
+@mcp.tool()
 def power(base: float, exponent: float) -> CalculationResponse:
     """거듭제곱을 계산합니다: base^exponent"""
     result = base ** exponent
@@ -220,7 +220,7 @@ def power(base: float, exponent: float) -> CalculationResponse:
         message=f"{base}^{exponent} = {result}"
     )
 
-@app.tool()
+@mcp.tool()
 def square_root(number: float) -> CalculationResponse:
     """제곱근을 계산합니다."""
     if number < 0:
@@ -234,7 +234,7 @@ def square_root(number: float) -> CalculationResponse:
         message=f"√{number} = {result}"
     )
 
-@app.tool()
+@mcp.tool()
 def factorial(n: int) -> CalculationResponse:
     """팩토리얼을 계산합니다: n!"""
     if n < 0:
@@ -251,8 +251,8 @@ def factorial(n: int) -> CalculationResponse:
         message=f"{n}! = {result}"
     )
 
-# 서버 정보 및 상태 확인
-@app.get("/")
+# 서버 정보 및 상태 확인 (사람 확인용 - 선택사항)
+@mcp.app.get("/")
 async def root():
     """서버 기본 정보를 반환합니다."""
     return {
@@ -326,11 +326,16 @@ async def root():
                 "endpoint": "/tools/factorial",
                 "example": {"n": 5}
             }
-        ]
+        ],
+        "mcp_endpoints": {
+            "tools_list": "/.well-known/mcp/tools",
+            "tool_call": "/mcp/call/{tool}",
+            "note": "MCP 에이전트는 위 엔드포인트를 사용합니다"
+        }
     }
 
-# 서버 상태 확인
-@app.get("/health")
+# 서버 상태 확인 (사람 확인용 - 선택사항)
+@mcp.app.get("/health")
 async def health_check():
     """서버 상태를 확인합니다."""
     return {
@@ -339,8 +344,8 @@ async def health_check():
         "uptime": "running"
     }
 
-# 사용 가능한 도구 목록
-@app.get("/tools")
+# 사용 가능한 도구 목록 (사람 확인용 - 선택사항)
+@mcp.app.get("/tools")
 async def list_tools():
     """사용 가능한 모든 도구 목록을 반환합니다."""
     tools_info = [
@@ -432,7 +437,8 @@ async def list_tools():
     
     return {
         "tools": tools_info,
-        "total_count": len(tools_info)
+        "total_count": len(tools_info),
+        "note": "이 엔드포인트는 사람 확인용입니다. MCP 에이전트는 /.well-known/mcp/tools를 사용합니다."
     }
 
 if __name__ == "__main__":
@@ -442,5 +448,9 @@ if __name__ == "__main__":
     print("📖 API 문서: http://localhost:8000/docs")
     print("🔧 사용 가능한 도구: http://localhost:8000/tools")
     print("=" * 50)
+    print("🔗 MCP 표준 엔드포인트:")
+    print("  📋 도구 목록: http://localhost:8000/.well-known/mcp/tools")
+    print("  🚀 도구 실행: http://localhost:8000/mcp/call/{tool}")
+    print("=" * 50)
     
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(mcp.app, host="0.0.0.0", port=8000)

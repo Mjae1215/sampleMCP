@@ -19,6 +19,13 @@ def test_server_info():
             print(f"  버전: {data.get('version')}")
             print(f"  상태: {data.get('status')}")
             print(f"  사용 가능한 도구: {len(data.get('available_tools', []))}개")
+            
+            # MCP 표준 엔드포인트 정보 출력
+            mcp_endpoints = data.get('mcp_endpoints', {})
+            if mcp_endpoints:
+                print("  🔗 MCP 표준 엔드포인트:")
+                print(f"    도구 목록: {mcp_endpoints.get('tools_list')}")
+                print(f"    도구 실행: {mcp_endpoints.get('tool_call')}")
         else:
             print(f"❌ 서버 정보 조회 실패: {response.status_code}")
     except Exception as e:
@@ -41,9 +48,30 @@ def test_health_check():
     except Exception as e:
         print(f"❌ 서버 상태 확인 오류: {e}")
 
+def test_mcp_standard_endpoints():
+    """MCP 표준 엔드포인트 테스트"""
+    print("\n🔗 MCP 표준 엔드포인트 테스트")
+    print("-" * 40)
+    
+    # MCP 도구 목록 조회
+    print("MCP 도구 목록 조회:")
+    try:
+        response = requests.get(f"{BASE_URL}/.well-known/mcp/tools")
+        if response.status_code == 200:
+            data = response.json()
+            tools = data.get('tools', [])
+            print(f"  ✅ 성공: {len(tools)}개 도구 발견")
+            for tool in tools:
+                print(f"    - {tool.get('name')}: {tool.get('description')}")
+        else:
+            print(f"  ❌ 실패: {response.status_code}")
+            print(f"  오류: {response.text}")
+    except Exception as e:
+        print(f"  ❌ 오류: {e}")
+
 def test_tools_list():
-    """도구 목록 조회 테스트"""
-    print("\n📋 도구 목록 조회 테스트")
+    """도구 목록 조회 테스트 (사용자 확인용)"""
+    print("\n📋 도구 목록 조회 테스트 (사용자 확인용)")
     print("-" * 40)
     
     try:
@@ -52,6 +80,7 @@ def test_tools_list():
             data = response.json()
             tools = data.get('tools', [])
             print(f"✅ 도구 목록 조회 성공 (총 {data.get('total_count')}개)")
+            print(f"  참고: {data.get('note', '')}")
             for tool in tools:
                 print(f"  - {tool['name']}: {tool['description']}")
                 print(f"    매개변수: {tool['parameters']}")
@@ -61,8 +90,8 @@ def test_tools_list():
         print(f"❌ 도구 목록 조회 오류: {e}")
 
 def test_calculation_tools():
-    """계산 도구들 테스트"""
-    print("\n🧮 계산 도구 테스트")
+    """계산 도구들 테스트 (MCP 표준 엔드포인트 사용)"""
+    print("\n🧮 계산 도구 테스트 (MCP 표준 엔드포인트)")
     print("-" * 40)
     
     test_cases = [
@@ -76,7 +105,7 @@ def test_calculation_tools():
         print(f"\n{tool_name} 도구 테스트:")
         try:
             response = requests.post(
-                f"{BASE_URL}/tools/{tool_name}",
+                f"{BASE_URL}/mcp/call/{tool_name}",
                 headers={"Content-Type": "application/json"},
                 data=json.dumps(params)
             )
@@ -94,8 +123,8 @@ def test_calculation_tools():
             print(f"  ❌ 오류: {e}")
 
 def test_calculate_tool():
-    """복합 계산 도구 테스트"""
-    print("\n🔄 복합 계산 도구 테스트")
+    """복합 계산 도구 테스트 (MCP 표준 엔드포인트 사용)"""
+    print("\n🔄 복합 계산 도구 테스트 (MCP 표준 엔드포인트)")
     print("-" * 40)
     
     test_cases = [
@@ -110,7 +139,7 @@ def test_calculate_tool():
         print(f"\n{operation} 연산 테스트:")
         try:
             response = requests.post(
-                f"{BASE_URL}/tools/calculate",
+                f"{BASE_URL}/mcp/call/calculate",
                 headers={"Content-Type": "application/json"},
                 data=json.dumps(params)
             )
@@ -128,8 +157,8 @@ def test_calculate_tool():
             print(f"  ❌ 오류: {e}")
 
 def test_statistics_tools():
-    """통계 계산 도구들 테스트"""
-    print("\n📊 통계 계산 도구 테스트")
+    """통계 계산 도구들 테스트 (MCP 표준 엔드포인트 사용)"""
+    print("\n📊 통계 계산 도구 테스트 (MCP 표준 엔드포인트)")
     print("-" * 40)
     
     test_numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -138,7 +167,7 @@ def test_statistics_tools():
     print("\n기본 통계 테스트:")
     try:
         response = requests.post(
-            f"{BASE_URL}/tools/statistics_basic",
+            f"{BASE_URL}/mcp/call/statistics_basic",
             headers={"Content-Type": "application/json"},
             data=json.dumps({"numbers": test_numbers})
         )
@@ -162,7 +191,7 @@ def test_statistics_tools():
     print("\n고급 통계 테스트:")
     try:
         response = requests.post(
-            f"{BASE_URL}/tools/statistics_advanced",
+            f"{BASE_URL}/mcp/call/statistics_advanced",
             headers={"Content-Type": "application/json"},
             data=json.dumps({"numbers": test_numbers})
         )
@@ -184,7 +213,7 @@ def test_statistics_tools():
     print("\n전체 통계 테스트:")
     try:
         response = requests.post(
-            f"{BASE_URL}/tools/statistics_full",
+            f"{BASE_URL}/mcp/call/statistics_full",
             headers={"Content-Type": "application/json"},
             data=json.dumps({"numbers": test_numbers})
         )
@@ -202,15 +231,15 @@ def test_statistics_tools():
         print(f"  ❌ 오류: {e}")
 
 def test_math_functions():
-    """수학 함수 도구들 테스트"""
-    print("\n🔢 수학 함수 도구 테스트")
+    """수학 함수 도구들 테스트 (MCP 표준 엔드포인트 사용)"""
+    print("\n🔢 수학 함수 도구 테스트 (MCP 표준 엔드포인트)")
     print("-" * 40)
     
     # 거듭제곱 테스트
     print("\n거듭제곱 테스트:")
     try:
         response = requests.post(
-            f"{BASE_URL}/tools/power",
+            f"{BASE_URL}/mcp/call/power",
             headers={"Content-Type": "application/json"},
             data=json.dumps({"base": 2, "exponent": 3})
         )
@@ -231,7 +260,7 @@ def test_math_functions():
     print("\n제곱근 테스트:")
     try:
         response = requests.post(
-            f"{BASE_URL}/tools/square_root",
+            f"{BASE_URL}/mcp/call/square_root",
             headers={"Content-Type": "application/json"},
             data=json.dumps({"number": 16})
         )
@@ -252,7 +281,7 @@ def test_math_functions():
     print("\n팩토리얼 테스트:")
     try:
         response = requests.post(
-            f"{BASE_URL}/tools/factorial",
+            f"{BASE_URL}/mcp/call/factorial",
             headers={"Content-Type": "application/json"},
             data=json.dumps({"n": 5})
         )
@@ -270,15 +299,15 @@ def test_math_functions():
         print(f"  ❌ 오류: {e}")
 
 def test_error_cases():
-    """오류 케이스 테스트"""
-    print("\n⚠️ 오류 케이스 테스트")
+    """오류 케이스 테스트 (MCP 표준 엔드포인트 사용)"""
+    print("\n⚠️ 오류 케이스 테스트 (MCP 표준 엔드포인트)")
     print("-" * 40)
     
     # 0으로 나누기
     print("0으로 나누기 테스트:")
     try:
         response = requests.post(
-            f"{BASE_URL}/tools/divide",
+            f"{BASE_URL}/mcp/call/divide",
             headers={"Content-Type": "application/json"},
             data=json.dumps({"a": 10, "b": 0})
         )
@@ -293,7 +322,7 @@ def test_error_cases():
     print("\n잘못된 연산 테스트:")
     try:
         response = requests.post(
-            f"{BASE_URL}/tools/calculate",
+            f"{BASE_URL}/mcp/call/calculate",
             headers={"Content-Type": "application/json"},
             data=json.dumps({"operation": "invalid", "a": 10, "b": 5})
         )
@@ -308,7 +337,7 @@ def test_error_cases():
     print("\n빈 숫자 목록 테스트:")
     try:
         response = requests.post(
-            f"{BASE_URL}/tools/statistics_basic",
+            f"{BASE_URL}/mcp/call/statistics_basic",
             headers={"Content-Type": "application/json"},
             data=json.dumps({"numbers": []})
         )
@@ -323,7 +352,7 @@ def test_error_cases():
     print("\n음수 제곱근 테스트:")
     try:
         response = requests.post(
-            f"{BASE_URL}/tools/square_root",
+            f"{BASE_URL}/mcp/call/square_root",
             headers={"Content-Type": "application/json"},
             data=json.dumps({"number": -4})
         )
@@ -374,6 +403,7 @@ def main():
     # 테스트 실행
     test_server_info()
     test_health_check()
+    test_mcp_standard_endpoints()
     test_tools_list()
     test_calculation_tools()
     test_calculate_tool()
@@ -389,6 +419,9 @@ def main():
     print(f"  📖 API 문서: {BASE_URL}/docs")
     print(f"  🔧 도구 목록: {BASE_URL}/tools")
     print(f"  🏥 상태 확인: {BASE_URL}/health")
+    print(f"  🔗 MCP 표준 엔드포인트:")
+    print(f"    📋 도구 목록: {BASE_URL}/.well-known/mcp/tools")
+    print(f"    🚀 도구 실행: {BASE_URL}/mcp/call/{{tool}}")
 
 if __name__ == "__main__":
     main()

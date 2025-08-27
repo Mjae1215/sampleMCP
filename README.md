@@ -11,6 +11,7 @@ FastMCP를 사용하여 만든 HTTP 방식의 Model Context Protocol (MCP) 서�
 - **📊 통계 계산**: 기본/고급/전체 통계
 - **🔢 수학 함수**: 거듭제곱, 제곱근, 팩토리얼
 - **⚡ 실시간 응답**: JSON 형식의 구조화된 응답
+- **🔗 MCP 표준 준수**: `/.well-known/mcp/tools`, `/mcp/call/{tool}` 자동 제공
 
 ## 🚀 빠른 시작
 
@@ -31,12 +32,27 @@ python mcp_server.py
 - **도구 목록**: http://localhost:8000/tools
 - **상태 확인**: http://localhost:8000/health
 
+## 🔗 MCP 표준 엔드포인트 (에이전트용)
+
+FastMCP가 자동으로 제공하는 표준 MCP 엔드포인트입니다:
+
+- **`/.well-known/mcp/tools`** - 사용 가능한 도구 목록 조회
+- **`/mcp/call/{tool}`** - 특정 도구 실행
+
+이 엔드포인트들은 MCP 에이전트가 실제로 사용하는 표준 인터페이스입니다.
+
 ## 🔧 사용 가능한 도구
 
 ### 1. **기본 사칙연산**
 
 #### 덧셈 (add)
 ```bash
+# MCP 표준 방식 (에이전트용)
+curl -X POST "http://localhost:8000/mcp/call/add" \
+  -H "Content-Type: application/json" \
+  -d '{"a": 10, "b": 5}'
+
+# 사용자 확인용 (선택사항)
 curl -X POST "http://localhost:8000/tools/add" \
   -H "Content-Type: application/json" \
   -d '{"a": 10, "b": 5}'
@@ -55,28 +71,28 @@ curl -X POST "http://localhost:8000/tools/add" \
 
 #### 뺄셈 (subtract)
 ```bash
-curl -X POST "http://localhost:8000/tools/subtract" \
+curl -X POST "http://localhost:8000/mcp/call/subtract" \
   -H "Content-Type: application/json" \
   -d '{"a": 10, "b": 3}'
 ```
 
 #### 곱셈 (multiply)
 ```bash
-curl -X POST "http://localhost:8000/tools/multiply" \
+curl -X POST "http://localhost:8000/mcp/call/multiply" \
   -H "Content-Type: application/json" \
   -d '{"a": 6, "b": 7}'
 ```
 
 #### 나눗셈 (divide)
 ```bash
-curl -X POST "http://localhost:8000/tools/divide" \
+curl -X POST "http://localhost:8000/mcp/call/divide" \
   -H "Content-Type: application/json" \
   -d '{"a": 20, "b": 4}'
 ```
 
 #### 복합 계산 (calculate)
 ```bash
-curl -X POST "http://localhost:8000/tools/calculate" \
+curl -X POST "http://localhost:8000/mcp/call/calculate" \
   -H "Content-Type: application/json" \
   -d '{"operation": "add", "a": 15, "b": 25}'
 ```
@@ -85,7 +101,7 @@ curl -X POST "http://localhost:8000/tools/calculate" \
 
 #### 기본 통계 (statistics_basic)
 ```bash
-curl -X POST "http://localhost:8000/tools/statistics_basic" \
+curl -X POST "http://localhost:8000/mcp/call/statistics_basic" \
   -H "Content-Type: application/json" \
   -d '{"numbers": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}'
 ```
@@ -109,7 +125,7 @@ curl -X POST "http://localhost:8000/tools/statistics_basic" \
 
 #### 고급 통계 (statistics_advanced)
 ```bash
-curl -X POST "http://localhost:8000/tools/statistics_advanced" \
+curl -X POST "http://localhost:8000/mcp/call/statistics_advanced" \
   -H "Content-Type: application/json" \
   -d '{"numbers": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}'
 ```
@@ -133,7 +149,7 @@ curl -X POST "http://localhost:8000/tools/statistics_advanced" \
 
 #### 전체 통계 (statistics_full)
 ```bash
-curl -X POST "http://localhost:8000/tools/statistics_full" \
+curl -X POST "http://localhost:8000/mcp/call/statistics_full" \
   -H "Content-Type: application/json" \
   -d '{"numbers": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}'
 ```
@@ -163,7 +179,7 @@ curl -X POST "http://localhost:8000/tools/statistics_full" \
 
 #### 거듭제곱 (power)
 ```bash
-curl -X POST "http://localhost:8000/tools/power" \
+curl -X POST "http://localhost:8000/mcp/call/power" \
   -H "Content-Type: application/json" \
   -d '{"base": 2, "exponent": 3}'
 ```
@@ -181,7 +197,7 @@ curl -X POST "http://localhost:8000/tools/power" \
 
 #### 제곱근 (square_root)
 ```bash
-curl -X POST "http://localhost:8000/tools/square_root" \
+curl -X POST "http://localhost:8000/mcp/call/square_root" \
   -H "Content-Type: application/json" \
   -d '{"number": 16}'
 ```
@@ -199,7 +215,7 @@ curl -X POST "http://localhost:8000/tools/square_root" \
 
 #### 팩토리얼 (factorial)
 ```bash
-curl -X POST "http://localhost:8000/tools/factorial" \
+curl -X POST "http://localhost:8000/mcp/call/factorial" \
   -H "Content-Type: application/json" \
   -d '{"n": 5}'
 ```
@@ -217,22 +233,20 @@ curl -X POST "http://localhost:8000/tools/factorial" \
 
 ## 📖 API 엔드포인트
 
+### 🔗 MCP 표준 엔드포인트 (에이전트용)
+| 엔드포인트 | 메서드 | 설명 |
+|------------|--------|------|
+| `/.well-known/mcp/tools` | GET | 사용 가능한 도구 목록 (MCP 표준) |
+| `/mcp/call/{tool}` | POST | 특정 도구 실행 (MCP 표준) |
+
+### 🌐 사용자 확인용 엔드포인트 (선택사항)
 | 엔드포인트 | 메서드 | 설명 |
 |------------|--------|------|
 | `/` | GET | 서버 기본 정보 및 도구 목록 |
 | `/health` | GET | 서버 상태 확인 |
 | `/tools` | GET | 사용 가능한 도구 상세 정보 |
-| `/tools/add` | POST | 덧셈 연산 |
-| `/tools/subtract` | POST | 뺄셈 연산 |
-| `/tools/multiply` | POST | 곱셈 연산 |
-| `/tools/divide` | POST | 나눗셈 연산 |
-| `/tools/calculate` | POST | 복합 계산 연산 |
-| `/tools/statistics_basic` | POST | 기본 통계 계산 |
-| `/tools/statistics_advanced` | POST | 고급 통계 계산 |
-| `/tools/statistics_full` | POST | 전체 통계 계산 |
-| `/tools/power` | POST | 거듭제곱 계산 |
-| `/tools/square_root` | POST | 제곱근 계산 |
-| `/tools/factorial` | POST | 팩토리얼 계산 |
+| `/docs` | GET | Swagger UI API 문서 |
+| `/redoc` | GET | ReDoc API 문서 |
 
 ## 🧪 테스트
 
@@ -243,24 +257,22 @@ python test_server.py
 
 ### 수동 테스트
 ```bash
-# 서버 정보 확인
-curl http://localhost:8000/
+# MCP 표준 엔드포인트 테스트
+curl http://localhost:8000/.well-known/mcp/tools
 
-# 도구 목록 조회
-curl http://localhost:8000/tools
-
-# 서버 상태 확인
-curl http://localhost:8000/health
-
-# 기본 통계 테스트
-curl -X POST "http://localhost:8000/tools/statistics_basic" \
+# 기본 통계 테스트 (MCP 표준)
+curl -X POST "http://localhost:8000/mcp/call/statistics_basic" \
   -H "Content-Type: application/json" \
   -d '{"numbers": [10, 20, 30, 40, 50]}'
 
-# 거듭제곱 테스트
-curl -X POST "http://localhost:8000/tools/power" \
+# 거듭제곱 테스트 (MCP 표준)
+curl -X POST "http://localhost:8000/mcp/call/power" \
   -H "Content-Type: application/json" \
   -d '{"base": 3, "exponent": 4}'
+
+# 사용자 확인용 엔드포인트 테스트
+curl http://localhost:8000/health
+curl http://localhost:8000/tools
 ```
 
 ## 🌐 웹 브라우저에서 테스트
@@ -299,18 +311,18 @@ curl -X POST "http://localhost:8000/tools/power" \
 ```python
 import requests
 
-# 기본 통계 계산
+# MCP 표준 방식으로 기본 통계 계산
 response = requests.post(
-    "http://localhost:8000/tools/statistics_basic",
+    "http://localhost:8000/mcp/call/statistics_basic",
     json={"numbers": [1, 2, 3, 4, 5]}
 )
 result = response.json()
 print(f"평균: {result['results']['mean']}")
 print(f"표준편차: {result['results']['std_deviation']}")
 
-# 거듭제곱 계산
+# MCP 표준 방식으로 거듭제곱 계산
 response = requests.post(
-    "http://localhost:8000/tools/power",
+    "http://localhost:8000/mcp/call/power",
     json={"base": 2, "exponent": 10}
 )
 result = response.json()
@@ -319,8 +331,8 @@ print(f"2^10 = {result['result']}")
 
 ### JavaScript fetch로 사용
 ```javascript
-// 전체 통계 계산
-fetch('http://localhost:8000/tools/statistics_full', {
+// MCP 표준 방식으로 전체 통계 계산
+fetch('http://localhost:8000/mcp/call/statistics_full', {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json',
@@ -334,8 +346,8 @@ fetch('http://localhost:8000/tools/statistics_full', {
     console.log(`범위: ${data.results.range}`);
 });
 
-// 팩토리얼 계산
-fetch('http://localhost:8000/tools/factorial', {
+// MCP 표준 방식으로 팩토리얼 계산
+fetch('http://localhost:8000/mcp/call/factorial', {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json',
@@ -380,3 +392,10 @@ sample_mcp/
 - 3개 통계 계산
 - 3개 수학 함수
 - 1개 복합 계산
+
+**🔗 MCP 표준 엔드포인트:**
+- `/.well-known/mcp/tools` - 도구 목록
+- `/mcp/call/{tool}` - 도구 실행
+
+**🌐 사용자 확인용 엔드포인트:**
+- `/`, `/health`, `/tools` - 사람이 확인하기 위한 선택사항
